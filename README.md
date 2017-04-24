@@ -20,9 +20,18 @@ Login and configure SSH access.  Initial login is `pi` with password `raspberry`
 
 Reboot.
 
+## Connect to your Pi
+
 Now try to login remotely:
 
     ssh pi@raspberrypi.local
+
+If you can't find your Pi on the network
+
+    brew install nmap
+    sudo nmap -sP 192.168.1.0/24 | awk '/^Nmap/{ip=$NF}/B8:27:EB/{print ip}'
+
+where 192.168.1.* will be your local network mask.  More details: https://raspberrypi.stackexchange.com/questions/13936/find-raspberry-pi-address-on-local-network
 
 ## Install Go
 
