@@ -118,58 +118,6 @@ Install a GUI from Raspbian Lite (https://www.raspberrypi.org/forums/viewtopic.p
     sudo reboot now
     # you should now see the above webpage in full screen
 
-
-
-
-
-
-## NO!!!!!!!!  Setup a light display manager
-
-    sudo apt-get install lightdm
-    sudo vi /etc/lightdm/lightdm.conf
-
-```
-[SeatDefaults]
-autologin-user=<YOUR USER>
-autologin-user-timeout=0
-user-session=ubuntu
-```
-
-    # run raspi-config to setup Boot options
-    sudo raspi-config
-    # pick Boot Options > Desktop/CLI > Desktop. Choose Finish, then reboot.
-
-## Let's run Chromium instead of fbi
-
-    sudo apt-get install -y chromium-browser x11-xserver-utils unclutter
-    mkdir -p  /home/pi/.config/lxsession/LXDE-pi
-    vi /home/pi/.config/lxsession/LXDE-pi/autostart
-
-    # paste in:
-
-```
-@lxpanel --profile LXDE-pi
-@pcmanfm --desktop --profile LXDE-pi
-#@xscreensaver -no-splash
-#@point-rpi
-@xset s off
-@xset -dpms
-@xset s noblank
-@sed -i 's/"exited_cleanly": false/"exited_cleanly": true/' ~/.config/chromium/Default/Preferences
-@chromium-browser --incognito --noerrdialogs --kiosk bloggerbrothers.com
-```
-
-
-
-
-
-
-
-
-
-
-
-
 ## Install Go
 
     wget https://storage.googleapis.com/golang/go1.9.2.linux-armv6l.tar.gz
