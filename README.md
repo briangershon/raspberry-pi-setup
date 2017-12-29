@@ -16,21 +16,23 @@ Once machine finishes booting, initial login is `pi` with password `raspberry`.
 
 Run `sudo raspi-config`.
 
-Setup keyboard. This is important, otherwise  you may type wrong characters when setting up Wi-fi next. Choose `Localization` menu. Choose keyboard setup menu. If your exact keyboard is not on the list then choose one of the generic 101, 102 or 104 keyboards.  (Mine was 101 Generic -- if in US, don't pick default English UK -- choose Other and pick English US)
+Setup keyboard. This is important, otherwise  you may type wrong characters when setting up Wi-fi next. Choose `Localization` menu. Choose `Change Keyboard Layout` menu. If your exact keyboard is not on the list then choose one of the generic 101, 102 or 104 keyboards.  (Mine was 101 Generic -- if in US, don't pick default English UK -- choose Other and pick English US)
 
 Connect to Wi-fi via `Network Options` > `Wi-fi`. While there, change `pi` password and change hostname or leave it as the default `raspberrypi`.
 
 If this doesn't work, `sudo nano /etc/wpa_supplicant/wpa_supplicant.conf` and make sure settings look ok. Restart network via `wpa_cli -i wlan0 reconfigure`. (https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md)
 
+Choose `Update` menu to test wifi and get latest files.
+
 Then enable SSH access. Choose `Interfacing Options` and turn on `SSH`.
 
-Optionally, change Hostname.
+Optionally, change Hostname via `Network` > `Hostname` menu.
+
+Change password via `Network` > `Change User Password`.
+
+Expand filesystem via `Advanced` > `Expand Filesystem` menu.
 
 Exit `raspi-config` and choose to Reboot.
-
-Do you have internet connectivity?  Try `ping google.com`
-
-Update to latest version via `sudo raspi-config` and choose `Update`.
 
 ## Connect to your Pi remotely via SSH
 
@@ -45,9 +47,128 @@ If you can't find your Pi on the network
 
 where 192.168.1.* will be your local network mask.  More details: https://raspberrypi.stackexchange.com/questions/13936/find-raspberry-pi-address-on-local-network
 
-**Change your password via `passwd`.**
-
 If that all works, you can now unplug your peripherals and connect to the Raspberry PI via SSH.
+
+## Setup passwordless login
+
+    mkdir ~/.ssh
+    chmod 700 ~/.ssh
+    touch ~/.ssh/authorized_keys
+    chmod 600 ~/.ssh/authorized_keys
+    vi ~/.ssh/authorized_keys
+    # add your id_rsa.pub key in here
+
+# CLI OPTION
+
+## Setup autologin with CLI
+
+From https://www.raspberrypi.org/forums/viewtopic.php?t=127042:
+
+Create `/etc/systemd/system/getty@tty1.service.d/autologin.conf`
+
+And put this in it:
+
+```
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin pi --noclear %I 38400 linux
+```
+
+Run `sudo systemctl enable getty@tty1.service`
+
+## Create script to run slideshow
+
+Create `~/show.sh` to change image every 60 seconds:
+
+```
+#!/bin/bash
+fbi -noverbose -m 1280x800 -u -a -T 1 -t 60 /home/pi/*.JPG
+```
+
+## Auto run slideshow
+
+In `~/.bashrc` add:
+
+`sudo bash /home/pi/show.sh`
+
+Note: Only problem with this is that each time you ssh in, it restarts the slidenow.
+
+# DESKTOP OPTION (run Chromium in Kiosk mode)
+
+Install a GUI from Raspbian Lite (https://www.raspberrypi.org/forums/viewtopic.php?t=133691)
+
+    #sudo apt-get install --no-install-recommends xinit raspberrypi-ui-mods lxterminal gvfs
+    sudo apt-get install --no-install-recommends raspberrypi-ui-mods
+    sudo apt-get install -y chromium-browser unclutter
+    sudo reboot now
+
+    # from: https://raspberrypi.stackexchange.com/questions/40631/setting-up-a-kiosk-with-chromium
+    cp /etc/xdg/lxsession/LXDE-pi/autostart /home/pi/.config/lxsession/LXDE-pi/autostart
+    sudo vi /home/pi/.config/lxsession/LXDE-pi/autostart
+
+```
+#@xscreensaver -no-splash  # comment this line out to disable screensaver
+@xset s off
+@xset -dpms
+@xset s noblank
+@sed -i 's/"exited_cleanly": false/"exited_cleanly": true/' ~/.config/chromium/Default/Preferences
+@chromium-browser --incognito --noerrdialogs --kiosk https://www.briangershon.com/
+```
+
+    sudo reboot now
+    # you should now see the above webpage in full screen
+
+
+
+
+
+
+## NO!!!!!!!!  Setup a light display manager
+
+    sudo apt-get install lightdm
+    sudo vi /etc/lightdm/lightdm.conf
+
+```
+[SeatDefaults]
+autologin-user=<YOUR USER>
+autologin-user-timeout=0
+user-session=ubuntu
+```
+
+    # run raspi-config to setup Boot options
+    sudo raspi-config
+    # pick Boot Options > Desktop/CLI > Desktop. Choose Finish, then reboot.
+
+## Let's run Chromium instead of fbi
+
+    sudo apt-get install -y chromium-browser x11-xserver-utils unclutter
+    mkdir -p  /home/pi/.config/lxsession/LXDE-pi
+    vi /home/pi/.config/lxsession/LXDE-pi/autostart
+
+    # paste in:
+
+```
+@lxpanel --profile LXDE-pi
+@pcmanfm --desktop --profile LXDE-pi
+#@xscreensaver -no-splash
+#@point-rpi
+@xset s off
+@xset -dpms
+@xset s noblank
+@sed -i 's/"exited_cleanly": false/"exited_cleanly": true/' ~/.config/chromium/Default/Preferences
+@chromium-browser --incognito --noerrdialogs --kiosk bloggerbrothers.com
+```
+
+
+
+
+
+
+
+
+
+
+
 
 ## Install Go
 
